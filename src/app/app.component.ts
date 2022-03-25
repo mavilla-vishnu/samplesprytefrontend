@@ -1,7 +1,10 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { SpinnerService } from './services/spinner.service';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-root',
@@ -10,10 +13,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class AppComponent implements OnInit {
   title = 'Spritelab';
-  message:string='';
+  message: string = '';
   postForm: FormGroup;
 
-  constructor(private _snackBar: MatSnackBar, private http: HttpClient) {
+  constructor(private datePipe: DatePipe, private _snackBar: MatSnackBar, private http: HttpClient, private dialog: MatDialog, private spinnerService: SpinnerService) {
     this.postForm = new FormGroup({
       name: new FormControl('', [Validators.required]),
       dob: new FormControl('', [Validators.required])
@@ -29,11 +32,20 @@ export class AppComponent implements OnInit {
       this._snackBar.open('Please enter valid data', 'OK');
       return;
     }
-
-    this.http.post('https://samplespryte.herokuapp.com/sendGreeting', this.postForm.value).subscribe((response:any)=>{
-      this.message=response.message;
+    this.spinnerService.showSpinner();
+    this.http.post('https://samplespryte.herokuapp.com/sendGreeting', { name: this.postForm.controls['name'].value, dob: this.datePipe.transform(this.postForm.controls['dob'].value, 'MM-dd-yyyy') }).subscribe((response: any) => {
+      this.spinnerService.dismissSpinner();
+      this.message = response.message;
     });
-
   }
+
+}
+
+@Component({
+  selector: 'dialog-overview-example-dialog',
+  templateUrl: 'spinner-dialog.html'
+})
+export class SpinnerDialog {
+  constructor(public dialogRef: MatDialogRef<SpinnerDialog>) { }
 
 }
